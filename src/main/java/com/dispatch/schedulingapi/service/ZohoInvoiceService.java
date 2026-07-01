@@ -67,4 +67,39 @@ public class ZohoInvoiceService {
             return "Failed to connect to Zoho.";
         }
     }
+    // 3. Generate a draft invoice for a specific customer
+    public String createDraftInvoice(String customerId) {
+        try {
+            String accessToken = getFreshAccessToken();
+
+            // Using Java Text Blocks for clean JSON formatting
+            String jsonPayload = """
+                {
+                    "customer_id": "%s",
+                    "line_items": [
+                        {
+                            "name": "Standard Appliance Diagnostics and Repair",
+                            "rate": 150.00,
+                            "quantity": 1
+                        }
+                    ]
+                }
+                """.formatted(customerId);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://www.zohoapis.com/invoice/v3/invoices"))
+                    .header("Authorization", "Zoho-oauthtoken " + accessToken)
+                    .header("X-com-zoho-invoice-organizationid", orgId)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.body();
+
+        } catch (Exception e) {
+            System.err.println("Zoho Invoice Error: " + e.getMessage());
+            return "Failed to create invoice.";
+        }
+    }
 }
