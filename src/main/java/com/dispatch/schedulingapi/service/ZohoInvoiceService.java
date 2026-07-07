@@ -67,30 +67,30 @@ public class ZohoInvoiceService {
             return "Failed to connect to Zoho.";
         }
     }
-    // 3. Generate a draft invoice for a specific customer
-    public String createDraftInvoice(String customerId) {
+    // 3. Generate a draft invoice for a specific customer with dynamic data
+    public String createDraftInvoice(String customerId, String serviceName, double price) {
         try {
             String accessToken = getFreshAccessToken();
 
-            // Using Java Text Blocks for clean JSON formatting
+            // Using Java Text Blocks to dynamically inject ID, Service Name, and Price
             String jsonPayload = """
                 {
                     "customer_id": "%s",
                     "line_items": [
                         {
-                            "name": "Standard Appliance Diagnostics and Repair",
-                            "rate": 150.00,
+                            "name": "%s",
+                            "rate": %.2f,
                             "quantity": 1
                         }
                     ]
                 }
-                """.formatted(customerId);
+                """.formatted(customerId, serviceName, price);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://www.zohoapis.com/invoice/v3/invoices"))
                     .header("Authorization", "Zoho-oauthtoken " + accessToken)
                     .header("X-com-zoho-invoice-organizationid", orgId)
-                    .header("Content-Type", "application/json")
+                    .header("Content-Type", "application/json") // Tell Zoho we are sending JSON
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
 
