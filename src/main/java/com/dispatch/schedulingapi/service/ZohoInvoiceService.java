@@ -102,4 +102,42 @@ public class ZohoInvoiceService {
             return "Failed to create invoice.";
         }
     }
+    // 4. Create a new contact in Zoho and return their new Zoho ID
+    public String createContact(String name, String email, String phone) {
+        try {
+            String accessToken = getFreshAccessToken();
+
+            // JSON payload for a new Zoho Contact
+            String jsonPayload = """
+                {
+                    "contact_name": "%s",
+                    "contact_persons": [
+                        {
+                            "first_name": "%s",
+                            "email": "%s",
+                            "phone": "%s"
+                        }
+                    ]
+                }
+                """.formatted(name, name, email, phone);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://www.zohoapis.com/invoice/v3/contacts"))
+                    .header("Authorization", "Zoho-oauthtoken " + accessToken)
+                    .header("X-com-zoho-invoice-organizationid", orgId)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Parse the JSON response to extract the new contact_id
+            JsonNode rootNode = objectMapper.readTree(response.body());
+            return rootNode.path("contact").path("contact_id").asText();
+
+        } catch (Exception e) {
+            System.err.println("Zoho Contact Creation Error: " + e.getMessage());
+            throw new RuntimeException("Failed to create customer in Zoho");
+        }
+    }
 }

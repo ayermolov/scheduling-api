@@ -23,6 +23,9 @@ public class Customer {
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Appointment> appointments;
 
+    @Column(name = "zoho_contact_id")
+    private String zohoContactId;
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -34,4 +37,6 @@ public class Customer {
     public void setEmail(String email) { this.email = email; }
     public List<Appointment> getAppointments() { return appointments; }
     public void setAppointments(List<Appointment> appointments) { this.appointments = appointments; }
+    public String getZohoContactId() { return zohoContactId; }
+    public void setZohoContactId(String zohoContactId) { this.zohoContactId = zohoContactId; }
 }

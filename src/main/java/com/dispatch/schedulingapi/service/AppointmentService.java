@@ -52,8 +52,23 @@ public class AppointmentService {
         String smsMessage = "New job at " + request.address() + " for " + customer.getName();
         twilioSmsService.sendSms(technician.getPhone(), smsMessage);
 
-        // 4. Generate Zoho Draft Invoice (You will need to update your Zoho service to accept the price and serviceName)
-        zohoInvoiceService.createDraftInvoice(customer.getId().toString(), request.serviceName(), request.price());
+        String zohoId = customer.getZohoContactId();
+
+        // Safety check to ensure the customer actually has a Zoho ID linked
+        if (zohoId == null || zohoId.isEmpty()) {
+            throw new RuntimeException("This customer does not have a linked Zoho Contact ID.");
+        }
+
+        String zohoResponse = zohoInvoiceService.createDraftInvoice(
+                zohoId,
+                request.serviceName(),
+                request.price()
+        );
+
+        // Print the response to the console so we can debug it
+        System.out.println("ZOHO API RESPONSE: " + zohoResponse);
+
+
 
         return "Appointment scheduled successfully!";
     }
