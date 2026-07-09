@@ -18,13 +18,16 @@ public class CustomerService {
 
     @Transactional
     public Customer createNewCustomer(String name, String email, String phone) {
+        // SANITIZER: If the email is blank or just spaces, force it to be a true null
+        String sanitizedEmail = (email == null || email.trim().isEmpty()) ? null : email.trim();
+
         // 1. Call Zoho to create the contact and get the 19-digit ID
         String newZohoId = zohoInvoiceService.createContact(name, email, phone);
 
         // 2. Create the local Customer object
         Customer customer = new Customer();
         customer.setName(name);
-        customer.setEmail(email);
+        customer.setEmail(sanitizedEmail);
         customer.setPhone(phone);
         customer.setZohoContactId(newZohoId); // Link the two databases!
 

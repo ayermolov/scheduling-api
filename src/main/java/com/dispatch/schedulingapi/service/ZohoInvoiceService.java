@@ -3,6 +3,9 @@ package com.dispatch.schedulingapi.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -107,19 +110,22 @@ public class ZohoInvoiceService {
         try {
             String accessToken = getFreshAccessToken();
 
-            // JSON payload for a new Zoho Contact
-            String jsonPayload = """
-                {
-                    "contact_name": "%s",
-                    "contact_persons": [
-                        {
-                            "first_name": "%s",
-                            "email": "%s",
-                            "phone": "%s"
-                        }
-                    ]
-                }
-                """.formatted(name, name, email, phone);
+            // THE FIX: Build the JSON payload dynamically using Java Maps
+            Map<String, Object> contactPerson = new HashMap<>();
+            contactPerson.put("first_name", name);
+            contactPerson.put("phone", phone);
+
+            // Only attach the email field to the JSON if the user actually provided one
+            if (email != null && !email.trim().isEmpty()) {
+                contactPerson.put("email", email);
+            }
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("contact_name", name);
+            payload.put("contact_persons", List.of(contactPerson));
+
+            // Use Jackson to safely convert the Java Map into a perfect JSON string
+            String jsonPayload = objectMapper.writeValueAsString(payload);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://www.zohoapis.com/invoice/v3/contacts"))
@@ -131,8 +137,13 @@ public class ZohoInvoiceService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            // Parse the JSON response to extract the new contact_id
             JsonNode rootNode = objectMapper.readTree(response.body());
+
+            // Safety check to catch any other Zoho errors and print them to the console
+            if (rootNode.has("code") && rootNode.get("code").asInt() != 0) {
+                throw new RuntimeException("Zoho Error: " + rootNode.get("message").asText());
+            }
+
             return rootNode.path("contact").path("contact_id").asText();
 
         } catch (Exception e) {
