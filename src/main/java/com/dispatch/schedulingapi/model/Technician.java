@@ -1,5 +1,6 @@
 package com.dispatch.schedulingapi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class Technician {
     @Column(nullable = false)
     private String phone;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "technician")
     private List<Appointment> appointments;
 
